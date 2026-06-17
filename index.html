@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Arcadia X+ — Giveaway Entry</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg-0:#0a0712;
@@ -421,10 +422,16 @@
 
   .admin-actions{
     margin-bottom:20px;
+    display:flex;
+    gap:10px;
   }
 
   .pick-winner-btn{
-    width:100%;
+    flex:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
     padding:15px 16px;
     border:none;
     border-radius:12px;
@@ -437,8 +444,47 @@
     transition:transform .12s ease, opacity .12s ease;
   }
 
+  .pick-winner-btn svg{
+    width:18px;
+    height:18px;
+    flex-shrink:0;
+  }
+
   .pick-winner-btn:hover{ transform:translateY(-1px); }
   .pick-winner-btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+
+  .refresh-btn{
+    width:50px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--field-border);
+    border-radius:12px;
+    background:var(--field-bg);
+    color:var(--text-mid);
+    cursor:pointer;
+    transition:color .15s ease, border-color .15s ease, transform .15s ease;
+  }
+
+  .refresh-btn svg{
+    width:18px;
+    height:18px;
+  }
+
+  .refresh-btn:hover{
+    color:var(--purple-bright);
+    border-color:var(--purple-mid);
+  }
+
+  .refresh-btn.spinning svg{
+    animation:spin .6s linear;
+  }
+
+  @keyframes spin{
+    from{ transform:rotate(0deg); }
+    to{ transform:rotate(360deg); }
+  }
 
   .winner-card{
     display:none;
@@ -663,7 +709,13 @@
     </div>
 
     <div class="admin-actions">
-      <button class="pick-winner-btn" id="pickWinnerBtn">🎲 Pick Random Winner</button>
+      <button class="pick-winner-btn" id="pickWinnerBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+        Pick Random Winner
+      </button>
+      <button class="refresh-btn" id="refreshBtn" title="Refresh entries">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      </button>
     </div>
 
     <div class="winner-card" id="winnerCard">
@@ -686,9 +738,17 @@
   const successView = document.getElementById('successView');
   const successName = document.getElementById('successName');
 
-  // In-memory store for this session (no localStorage per artifact constraints).
-  // If persistent_storage is wired up later, window.storage.set(...) can replace this.
-  const entries = [];
+  // --- Supabase connection ---
+  // Replace these two values with your own Project URL and anon public key
+  // from Supabase: Project Settings -> API.
+  const SUPABASE_URL = 'https://dcadppgqvzdiilebaelc.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_cns_jEdldC_9DyerG_Xfkg_nDCQkUcT';
+
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Local cache of entries, used to render the admin table and pick a winner.
+  // This gets refreshed from Supabase every time the admin panel opens.
+  let entries = [];
 
   function setFieldError(fieldId, hasError){
     const el = document.getElementById(fieldId);
@@ -708,7 +768,7 @@
     return newStyle.test(value) || legacy.test(value);
   }
 
-  form.addEventListener('submit', function(e){
+  form.addEventListener('submit', async function(e){
     e.preventDefault();
 
     const name = document.getElementById('name').value.trim();
@@ -730,17 +790,21 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting…';
 
-    // Simulate a brief submit delay so the state change feels real.
-    setTimeout(function(){
-      entries.push({ name, email, discord, ts: Date.now() });
+    const { error } = await supabaseClient
+      .from('entries')
+      .insert([{ name, email, discord }]);
 
-      successName.textContent = name;
-      formView.classList.add('hide');
-      successView.classList.add('show');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enter Giveaway';
 
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Enter Giveaway';
-    }, 500);
+    if (error){
+      showStatus('Something went wrong submitting your entry. Please try again.', 'error');
+      return;
+    }
+
+    successName.textContent = name;
+    formView.classList.add('hide');
+    successView.classList.add('show');
   });
 
   ['name','email','discord'].forEach(function(id){
@@ -797,8 +861,7 @@
     }
 
     let rows = entries.map(function(e){
-      const d = new Date(e.ts);
-      const timeStr = d.toLocaleString();
+      const timeStr = new Date(e.created_at).toLocaleString();
       return '<tr>' +
         '<td>' + escapeHtml(e.name) + '</td>' +
         '<td>' + escapeHtml(e.email) + '</td>' +
@@ -814,10 +877,29 @@
       '</table>';
   }
 
-  function openPanel(){
+  async function fetchEntries(){
+    entriesContainer.innerHTML = '<div class="empty-state">Loading entries…</div>';
+
+    const { data, error } = await supabaseClient
+      .from('entries')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error){
+      entriesContainer.innerHTML = '<div class="empty-state">Could not load entries. Check your Supabase setup.</div>';
+      entryCount.textContent = '—';
+      pickWinnerBtn.disabled = true;
+      return;
+    }
+
+    entries = data || [];
     renderEntries();
+  }
+
+  function openPanel(){
     adminPanel.classList.add('show');
     closeGate();
+    fetchEntries();
   }
 
   function closePanel(){
@@ -835,6 +917,14 @@
     // restart animation
     void winnerCard.offsetWidth;
     winnerCard.classList.add('show');
+  });
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.addEventListener('click', function(){
+    refreshBtn.classList.remove('spinning');
+    void refreshBtn.offsetWidth;
+    refreshBtn.classList.add('spinning');
+    fetchEntries();
   });
 
   adminTrigger.addEventListener('click', openGate);
