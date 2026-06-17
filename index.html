@@ -119,6 +119,57 @@
     margin:0 0 26px;
   }
 
+  .countdown-card{
+    background:linear-gradient(160deg, rgba(124,58,237,0.16), rgba(10,7,18,0.4));
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:16px 14px;
+    margin-bottom:24px;
+    text-align:center;
+  }
+
+  .countdown-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--purple-bright);
+    font-weight:700;
+    margin-bottom:12px;
+  }
+
+  .countdown-units{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+  }
+
+  .countdown-unit{
+    min-width:52px;
+  }
+
+  .countdown-value{
+    font-size:22px;
+    font-weight:800;
+    color:var(--text-hi);
+    background:var(--field-bg);
+    border:1px solid var(--field-border);
+    border-radius:10px;
+    padding:8px 0;
+    font-variant-numeric:tabular-nums;
+  }
+
+  .countdown-name{
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+
+  .countdown-card.ended .countdown-label{
+    color:var(--text-mid);
+  }
+
   .field{
     margin-bottom:18px;
   }
@@ -204,6 +255,16 @@
 
   .legal a{ color:var(--purple-bright); text-decoration:none; }
 
+  .honeypot-field{
+    position:absolute;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+    opacity:0;
+    pointer-events:none;
+    left:-9999px;
+  }
+
   .status{
     margin-top:18px;
     padding:14px 16px;
@@ -249,6 +310,28 @@
   .success-view h2{ margin-bottom:8px; }
   .success-view p{ color:var(--text-mid); font-size:14px; line-height:1.6; margin:0 0 4px; }
   .success-view .entry-name{ color:var(--text-hi); font-weight:700; }
+
+  .closed-view{
+    display:none;
+    text-align:center;
+  }
+
+  .closed-view.show{ display:block; }
+
+  .closed-icon{
+    width:56px;
+    height:56px;
+    margin:0 auto 16px;
+    border-radius:50%;
+    background:rgba(124,58,237,0.12);
+    border:1px solid rgba(167,139,250,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .closed-view h2{ margin-bottom:8px; }
+  .closed-view p{ color:var(--text-mid); font-size:14px; line-height:1.6; margin:0; }
 
   .form-view.hide{ display:none; }
 
@@ -477,6 +560,11 @@
     border-color:var(--purple-mid);
   }
 
+  .refresh-btn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+
   .refresh-btn.spinning svg{
     animation:spin .6s linear;
   }
@@ -623,6 +711,28 @@
       <h2>Giveaway Entry</h2>
       <p class="sub">Enter your details below for a chance to win.</p>
 
+      <div class="countdown-card" id="countdownCard">
+        <div class="countdown-label">Giveaway Ends In</div>
+        <div class="countdown-units">
+          <div class="countdown-unit">
+            <div class="countdown-value" id="cdDays">00</div>
+            <div class="countdown-name">Days</div>
+          </div>
+          <div class="countdown-unit">
+            <div class="countdown-value" id="cdHours">00</div>
+            <div class="countdown-name">Hrs</div>
+          </div>
+          <div class="countdown-unit">
+            <div class="countdown-value" id="cdMinutes">00</div>
+            <div class="countdown-name">Min</div>
+          </div>
+          <div class="countdown-unit">
+            <div class="countdown-value" id="cdSeconds">00</div>
+            <div class="countdown-name">Sec</div>
+          </div>
+        </div>
+      </div>
+
       <form id="entryForm" novalidate>
         <div class="field" id="field-name">
           <label for="name">Name</label>
@@ -643,6 +753,12 @@
           <div class="err">Please enter your Discord username.</div>
         </div>
 
+        <!-- Honeypot: hidden from real users, bots tend to fill every field they find -->
+        <div class="honeypot-field" aria-hidden="true">
+          <label for="website">Website</label>
+          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+        </div>
+
         <button type="submit" class="submit-btn" id="submitBtn">Enter Giveaway</button>
       </form>
 
@@ -660,6 +776,14 @@
       <h2>You're entered!</h2>
       <p>Good luck, <span class="entry-name" id="successName"></span>.</p>
       <p>We'll message your Discord if you're picked.</p>
+    </div>
+
+    <div class="closed-view" id="closedView">
+      <div class="closed-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <h2>Entries are closed</h2>
+      <p>This giveaway is no longer accepting new entries. Follow our Discord and Instagram for the next one.</p>
     </div>
 
   </div>
@@ -716,6 +840,9 @@
       <button class="refresh-btn" id="refreshBtn" title="Refresh entries">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
       </button>
+      <button class="refresh-btn" id="exportBtn" title="Download CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
     </div>
 
     <div class="winner-card" id="winnerCard">
@@ -746,6 +873,60 @@
 
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // --- Giveaway cutoff ---
+  // Set this to the date/time entries should stop being accepted.
+  // Format: 'YYYY-MM-DDTHH:MM:SS' in the timezone you want it to apply in,
+  // or add a 'Z' at the end to use UTC. Example: '2026-07-01T23:59:59'
+  const ENTRIES_CLOSE_AT = '2026-07-01T23:59:59';
+
+  const closedView = document.getElementById('closedView');
+  const giveawayClosed = new Date() > new Date(ENTRIES_CLOSE_AT);
+
+  if (giveawayClosed){
+    formView.classList.add('hide');
+    closedView.classList.add('show');
+  }
+
+  // --- Countdown timer ---
+  const countdownCard = document.getElementById('countdownCard');
+  const cdDays = document.getElementById('cdDays');
+  const cdHours = document.getElementById('cdHours');
+  const cdMinutes = document.getElementById('cdMinutes');
+  const cdSeconds = document.getElementById('cdSeconds');
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+
+  let countdownInterval;
+
+  function updateCountdown(){
+    const diff = new Date(ENTRIES_CLOSE_AT) - new Date();
+
+    if (diff <= 0){
+      cdDays.textContent = '00';
+      cdHours.textContent = '00';
+      cdMinutes.textContent = '00';
+      cdSeconds.textContent = '00';
+      countdownCard.classList.add('ended');
+      document.querySelector('.countdown-label').textContent = 'Giveaway Ended';
+      if (countdownInterval) clearInterval(countdownInterval);
+      return;
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    cdDays.textContent = pad(days);
+    cdHours.textContent = pad(hours);
+    cdMinutes.textContent = pad(minutes);
+    cdSeconds.textContent = pad(seconds);
+  }
+
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+
   // Local cache of entries, used to render the admin table and pick a winner.
   // This gets refreshed from Supabase every time the admin panel opens.
   let entries = [];
@@ -770,6 +951,18 @@
 
   form.addEventListener('submit', async function(e){
     e.preventDefault();
+
+    if (giveawayClosed) return;
+
+    // Honeypot check: real users never fill this hidden field, bots often do.
+    const honeypot = document.getElementById('website').value;
+    if (honeypot){
+      // Silently pretend success so bots don't learn anything from the rejection.
+      successName.textContent = document.getElementById('name').value.trim() || 'there';
+      formView.classList.add('hide');
+      successView.classList.add('show');
+      return;
+    }
 
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -798,7 +991,13 @@
     submitBtn.textContent = 'Enter Giveaway';
 
     if (error){
-      showStatus('Something went wrong submitting your entry. Please try again.', 'error');
+      // Postgres unique-violation code is 23505; Supabase surfaces this on error.code
+      if (error.code === '23505'){
+        setFieldError('field-email', true);
+        showStatus('That email has already entered. One entry per person.', 'error');
+      } else {
+        showStatus('Something went wrong submitting your entry. Please try again.', 'error');
+      }
       return;
     }
 
@@ -854,6 +1053,7 @@
   function renderEntries(){
     entryCount.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
     pickWinnerBtn.disabled = entries.length === 0;
+    document.getElementById('exportBtn').disabled = entries.length === 0;
 
     if (entries.length === 0){
       entriesContainer.innerHTML = '<div class="empty-state">No entries yet. Submissions will appear here.</div>';
@@ -889,6 +1089,7 @@
       entriesContainer.innerHTML = '<div class="empty-state">Could not load entries. Check your Supabase setup.</div>';
       entryCount.textContent = '—';
       pickWinnerBtn.disabled = true;
+      document.getElementById('exportBtn').disabled = true;
       return;
     }
 
@@ -925,6 +1126,41 @@
     void refreshBtn.offsetWidth;
     refreshBtn.classList.add('spinning');
     fetchEntries();
+  });
+
+  const exportBtn = document.getElementById('exportBtn');
+  exportBtn.addEventListener('click', function(){
+    if (entries.length === 0) return;
+
+    function csvEscape(value){
+      const str = String(value == null ? '' : value);
+      if (/[",\n]/.test(str)){
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
+
+    const header = ['Name', 'Email', 'Discord', 'Submitted'];
+    const rows = entries.map(function(e){
+      return [
+        csvEscape(e.name),
+        csvEscape(e.email),
+        csvEscape(e.discord),
+        csvEscape(new Date(e.created_at).toLocaleString())
+      ].join(',');
+    });
+
+    const csvContent = [header.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'giveaway-entries-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   });
 
   adminTrigger.addEventListener('click', openGate);
