@@ -853,6 +853,16 @@
       <h2>You're entered!</h2>
       <p>Good luck, <span class="entry-name" id="successName"></span>.</p>
       <p>We'll message your Discord if you're picked.</p>
+
+      <div class="countdown-inline" id="countdownInlineSuccess" style="margin-top:20px;">
+        <div class="countdown-label" id="countdownLabelSuccess">Giveaway Ends In</div>
+        <div class="countdown-clock">
+          <span id="cdDaysSuccess">0</span><span class="cd-unit-name">d</span>
+          <span id="cdHoursSuccess">00</span><span class="cd-unit-name">h</span>
+          <span id="cdMinutesSuccess">00</span><span class="cd-unit-name">m</span>
+          <span id="cdSecondsSuccess">00</span><span class="cd-unit-name">s</span>
+        </div>
+      </div>
     </div>
 
     <div class="closed-view" id="closedView">
@@ -975,12 +985,26 @@
     closedView.classList.add('show');
   }
 
-  const countdownInline = document.getElementById('countdownInline');
-  const countdownLabel = document.getElementById('countdownLabel');
-  const cdDays = document.getElementById('cdDays');
-  const cdHours = document.getElementById('cdHours');
-  const cdMinutes = document.getElementById('cdMinutes');
-  const cdSeconds = document.getElementById('cdSeconds');
+  // Two countdown clocks share the same logic: one on the entry form,
+  // one on the post-submit confirmation screen.
+  const countdownClocks = [
+    {
+      wrap: document.getElementById('countdownInline'),
+      label: document.getElementById('countdownLabel'),
+      d: document.getElementById('cdDays'),
+      h: document.getElementById('cdHours'),
+      m: document.getElementById('cdMinutes'),
+      s: document.getElementById('cdSeconds')
+    },
+    {
+      wrap: document.getElementById('countdownInlineSuccess'),
+      label: document.getElementById('countdownLabelSuccess'),
+      d: document.getElementById('cdDaysSuccess'),
+      h: document.getElementById('cdHoursSuccess'),
+      m: document.getElementById('cdMinutesSuccess'),
+      s: document.getElementById('cdSecondsSuccess')
+    }
+  ];
 
   function pad(n){ return String(n).padStart(2, '0'); }
 
@@ -990,12 +1014,14 @@
     const diff = new Date(ENTRIES_CLOSE_AT) - new Date();
 
     if (diff <= 0){
-      cdDays.textContent = '0';
-      cdHours.textContent = '00';
-      cdMinutes.textContent = '00';
-      cdSeconds.textContent = '00';
-      countdownInline.classList.add('ended');
-      countdownLabel.textContent = 'Giveaway Ended';
+      countdownClocks.forEach(function(clock){
+        clock.d.textContent = '0';
+        clock.h.textContent = '00';
+        clock.m.textContent = '00';
+        clock.s.textContent = '00';
+        clock.wrap.classList.add('ended');
+        clock.label.textContent = 'Giveaway Ended';
+      });
       if (countdownInterval) clearInterval(countdownInterval);
       return;
     }
@@ -1006,10 +1032,12 @@
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    cdDays.textContent = days;
-    cdHours.textContent = pad(hours);
-    cdMinutes.textContent = pad(minutes);
-    cdSeconds.textContent = pad(seconds);
+    countdownClocks.forEach(function(clock){
+      clock.d.textContent = days;
+      clock.h.textContent = pad(hours);
+      clock.m.textContent = pad(minutes);
+      clock.s.textContent = pad(seconds);
+    });
   }
 
   updateCountdown();
