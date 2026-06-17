@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arcadia X+ — Giveaway Entry</title>
+<style>
+  :root{
+    --bg-0:#0a0712;
+    --bg-1:#15102a;
+    --purple-deep:#4c1d95;
+    --purple-mid:#7c3aed;
+    --purple-bright:#a78bfa;
+    --text-hi:#f3f0fb;
+    --text-mid:#b8aed4;
+    --text-dim:#7c7396;
+    --card-border:rgba(167,139,250,0.18);
+    --field-bg:rgba(20,14,38,0.65);
+    --field-border:rgba(167,139,250,0.22);
+    --success:#34d399;
+    --error:#f87171;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(124,58,237,0.35), transparent 55%),
+      radial-gradient(circle at 10% 90%, rgba(76,29,149,0.30), transparent 50%),
+      var(--bg-0);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color:var(--text-hi);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  /* faint dotted texture, echoing the logo background */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image: radial-gradient(rgba(167,139,250,0.06) 1px, transparent 1px);
+    background-size: 18px 18px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .page{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:460px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .heading{
+    text-align:center;
+    margin-bottom:28px;
+  }
+
+  .heading h1{
+    font-size:30px;
+    line-height:1.2;
+    font-weight:800;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+
+  .heading h1 .accent{
+    display:block;
+    background:linear-gradient(90deg, var(--purple-bright), var(--purple-mid));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .card{
+    width:100%;
+    background:linear-gradient(160deg, rgba(76,29,149,0.18), rgba(10,7,18,0.4));
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:32px 28px 30px;
+    backdrop-filter:blur(6px);
+    box-shadow:0 30px 60px -25px rgba(76,29,149,0.45);
+  }
+
+  .logo-mark{
+    display:flex;
+    justify-content:center;
+    margin-bottom:18px;
+  }
+
+  .logo-mark svg{
+    width:40px;
+    height:40px;
+    filter:drop-shadow(0 0 12px rgba(167,139,250,0.45));
+  }
+
+  .card h2{
+    text-align:center;
+    font-size:22px;
+    font-weight:800;
+    margin:0 0 6px;
+  }
+
+  .card .sub{
+    text-align:center;
+    font-size:14px;
+    color:var(--text-mid);
+    margin:0 0 26px;
+  }
+
+  .field{
+    margin-bottom:18px;
+  }
+
+  .field label{
+    display:block;
+    font-size:14px;
+    color:var(--text-mid);
+    margin-bottom:8px;
+  }
+
+  .field input{
+    width:100%;
+    background:var(--field-bg);
+    border:1px solid var(--field-border);
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:15px;
+    color:var(--text-hi);
+    outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .field input::placeholder{
+    color:var(--text-dim);
+  }
+
+  .field input:focus{
+    border-color:var(--purple-mid);
+    box-shadow:0 0 0 3px rgba(124,58,237,0.25);
+  }
+
+  .field input:invalid:not(:placeholder-shown){
+    border-color:var(--error);
+  }
+
+  .field .hint{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:6px;
+  }
+
+  .field .err{
+    font-size:12px;
+    color:var(--error);
+    margin-top:6px;
+    display:none;
+  }
+
+  .field.has-error .err{ display:block; }
+  .field.has-error input{ border-color:var(--error); }
+
+  .submit-btn{
+    width:100%;
+    margin-top:8px;
+    padding:15px 16px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg, var(--purple-mid), #8b5cf6);
+    color:#fff;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+    box-shadow:0 10px 25px -8px rgba(124,58,237,0.65);
+  }
+
+  .submit-btn:hover{ transform:translateY(-1px); }
+  .submit-btn:active{ transform:translateY(0); }
+  .submit-btn:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .legal{
+    text-align:center;
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:16px;
+    line-height:1.5;
+  }
+
+  .legal a{ color:var(--purple-bright); text-decoration:none; }
+
+  .status{
+    margin-top:18px;
+    padding:14px 16px;
+    border-radius:12px;
+    font-size:14px;
+    text-align:center;
+    display:none;
+  }
+
+  .status.show{ display:block; }
+
+  .status.success{
+    background:rgba(52,211,153,0.10);
+    border:1px solid rgba(52,211,153,0.35);
+    color:var(--success);
+  }
+
+  .status.error{
+    background:rgba(248,113,113,0.10);
+    border:1px solid rgba(248,113,113,0.35);
+    color:var(--error);
+  }
+
+  .success-view{
+    display:none;
+    text-align:center;
+  }
+
+  .success-view.show{ display:block; }
+
+  .success-view .check{
+    width:56px;
+    height:56px;
+    margin:0 auto 16px;
+    border-radius:50%;
+    background:rgba(52,211,153,0.12);
+    border:1px solid rgba(52,211,153,0.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .success-view h2{ margin-bottom:8px; }
+  .success-view p{ color:var(--text-mid); font-size:14px; line-height:1.6; margin:0 0 4px; }
+  .success-view .entry-name{ color:var(--text-hi); font-weight:700; }
+
+  .form-view.hide{ display:none; }
+
+  /* --- Admin: password gate overlay --- */
+  .admin-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(5,3,10,0.78);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+    padding:16px;
+  }
+
+  .admin-overlay.show{ display:flex; }
+
+  .admin-gate{
+    width:100%;
+    max-width:360px;
+    background:linear-gradient(160deg, rgba(76,29,149,0.22), rgba(10,7,18,0.55));
+    border:1px solid var(--card-border);
+    border-radius:18px;
+    padding:26px 24px;
+    box-shadow:0 30px 60px -25px rgba(76,29,149,0.55);
+  }
+
+  .admin-gate h3{
+    margin:0 0 6px;
+    font-size:18px;
+    font-weight:800;
+    text-align:center;
+  }
+
+  .admin-gate p{
+    margin:0 0 18px;
+    font-size:13px;
+    color:var(--text-mid);
+    text-align:center;
+  }
+
+  .admin-gate input{
+    width:100%;
+    background:var(--field-bg);
+    border:1px solid var(--field-border);
+    border-radius:12px;
+    padding:13px 14px;
+    font-size:15px;
+    color:var(--text-hi);
+    outline:none;
+    margin-bottom:12px;
+  }
+
+  .admin-gate input:focus{
+    border-color:var(--purple-mid);
+    box-shadow:0 0 0 3px rgba(124,58,237,0.25);
+  }
+
+  .admin-gate .gate-err{
+    font-size:12px;
+    color:var(--error);
+    text-align:center;
+    margin:-4px 0 12px;
+    display:none;
+  }
+
+  .admin-gate .gate-err.show{ display:block; }
+
+  .admin-gate-actions{
+    display:flex;
+    gap:10px;
+  }
+
+  .admin-gate-actions button{
+    flex:1;
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    border:none;
+  }
+
+  .gate-cancel{
+    background:transparent;
+    border:1px solid var(--field-border);
+    color:var(--text-mid);
+  }
+
+  .gate-submit{
+    background:linear-gradient(90deg, var(--purple-mid), #8b5cf6);
+    color:#fff;
+  }
+
+  /* --- Admin: panel --- */
+  .admin-panel{
+    position:fixed;
+    inset:0;
+    background:var(--bg-0);
+    z-index:40;
+    display:none;
+    overflow-y:auto;
+    padding:28px 18px 60px;
+  }
+
+  .admin-panel.show{ display:block; }
+
+  .admin-panel-inner{
+    max-width:680px;
+    margin:0 auto;
+  }
+
+  .admin-panel-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+
+  .admin-panel-header h2{
+    font-size:22px;
+    font-weight:800;
+    margin:0;
+  }
+
+  .admin-panel-header .count{
+    font-size:13px;
+    color:var(--text-mid);
+    margin-top:4px;
+  }
+
+  .admin-close{
+    background:transparent;
+    border:1px solid var(--field-border);
+    color:var(--text-mid);
+    border-radius:10px;
+    padding:9px 14px;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  .admin-close:hover{ color:var(--text-hi); border-color:var(--purple-mid); }
+
+  .entries-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+  }
+
+  .entries-table th{
+    text-align:left;
+    color:var(--text-mid);
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    padding:10px 12px;
+    border-bottom:1px solid var(--card-border);
+  }
+
+  .entries-table td{
+    padding:12px;
+    border-bottom:1px solid rgba(167,139,250,0.08);
+    color:var(--text-hi);
+  }
+
+  .entries-table tr:hover td{
+    background:rgba(124,58,237,0.06);
+  }
+
+  .admin-actions{
+    margin-bottom:20px;
+  }
+
+  .pick-winner-btn{
+    width:100%;
+    padding:15px 16px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg, var(--purple-mid), #8b5cf6);
+    color:#fff;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 10px 25px -8px rgba(124,58,237,0.65);
+    transition:transform .12s ease, opacity .12s ease;
+  }
+
+  .pick-winner-btn:hover{ transform:translateY(-1px); }
+  .pick-winner-btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+
+  .winner-card{
+    display:none;
+    text-align:center;
+    background:linear-gradient(160deg, rgba(124,58,237,0.22), rgba(10,7,18,0.45));
+    border:1px solid rgba(167,139,250,0.35);
+    border-radius:16px;
+    padding:24px 20px;
+    margin-bottom:20px;
+    box-shadow:0 20px 45px -20px rgba(124,58,237,0.55);
+  }
+
+  .winner-card.show{
+    display:block;
+    animation:winnerReveal .35s ease;
+  }
+
+  @keyframes winnerReveal{
+    from{ opacity:0; transform:scale(0.96); }
+    to{ opacity:1; transform:scale(1); }
+  }
+
+  .winner-label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--purple-bright);
+    font-weight:700;
+    margin-bottom:8px;
+  }
+
+  .winner-name{
+    font-size:24px;
+    font-weight:800;
+    color:var(--text-hi);
+    margin-bottom:4px;
+  }
+
+  .winner-meta{
+    font-size:13px;
+    color:var(--text-mid);
+  }
+
+  .empty-state{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:14px;
+    padding:48px 16px;
+    border:1px dashed var(--field-border);
+    border-radius:14px;
+  }
+
+  /* --- Site footer --- */
+  .site-footer{
+    margin-top:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:18px;
+    flex-wrap:wrap;
+    font-size:13px;
+  }
+
+  .site-footer a{
+    color:var(--text-mid);
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    transition:color .15s ease;
+  }
+
+  .site-footer a:hover{
+    color:var(--purple-bright);
+  }
+
+  .site-footer a svg{
+    width:16px;
+    height:16px;
+    flex-shrink:0;
+  }
+
+  .site-footer .dot{
+    color:var(--text-dim);
+  }
+
+  .site-footer .admin-link{
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-size:13px;
+    font-family:inherit;
+    color:var(--text-mid);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:0;
+    transition:color .15s ease;
+  }
+
+  .site-footer .admin-link:hover{
+    color:var(--purple-bright);
+  }
+
+  @media (max-width:380px){
+    .card{ padding:26px 20px 24px; }
+    .heading h1{ font-size:26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="heading">
+    <h1>Enter the Drop.<span class="accent">Powered by Arcadia.</span></h1>
+  </div>
+
+  <div class="card">
+
+    <div class="logo-mark">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="100" y2="100">
+            <stop offset="0" stop-color="#a78bfa"/>
+            <stop offset="1" stop-color="#5b21b6"/>
+          </linearGradient>
+        </defs>
+        <path d="M50 8 L72 50 L62 50 L50 27 L38 50 L28 50 Z" fill="url(#g1)"/>
+        <path d="M50 38 L78 88 L62 88 L50 64 L38 88 L22 88 Z" fill="url(#g1)"/>
+      </svg>
+    </div>
+
+    <div class="form-view" id="formView">
+      <h2>Giveaway Entry</h2>
+      <p class="sub">Enter your details below for a chance to win.</p>
+
+      <form id="entryForm" novalidate>
+        <div class="field" id="field-name">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" placeholder="Nolan Ivey" autocomplete="name" required />
+          <div class="err">Please enter your name.</div>
+        </div>
+
+        <div class="field" id="field-email">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="nolan@example.com" autocomplete="email" required />
+          <div class="err">Please enter a valid email address.</div>
+        </div>
+
+        <div class="field" id="field-discord">
+          <label for="discord">Discord Username</label>
+          <input type="text" id="discord" name="discord" placeholder="nolanivey" autocomplete="off" required />
+          <div class="hint">Used to contact you if you win.</div>
+          <div class="err">Please enter your Discord username.</div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Enter Giveaway</button>
+      </form>
+
+      <div class="status" id="statusBox"></div>
+
+      <p class="legal">By entering, you agree to be contacted via Discord or email if selected. One entry per person.</p>
+    </div>
+
+    <div class="success-view" id="successView">
+      <div class="check">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+          <path d="M5 13l4 4L19 7" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2>You're entered!</h2>
+      <p>Good luck, <span class="entry-name" id="successName"></span>.</p>
+      <p>We'll message your Discord if you're picked.</p>
+    </div>
+
+  </div>
+
+  <div class="site-footer">
+    <a href="https://discord.gg/arcadiax" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.01c.12.099.246.197.373.291a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.893.076.076 0 0 0-.04.106c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.001-3.03.077.077 0 0 0 .032-.057c.5-5.177-.838-9.674-3.549-13.66a.06.06 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z"/></svg>
+      Discord
+    </a>
+    <span class="dot">·</span>
+    <a href="https://instagram.com/arcadiaxplus" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0 5.838a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 6.6a2.6 2.6 0 1 1 0-5.2 2.6 2.6 0 0 1 0 5.2zm5.338-7.872a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92z"/></svg>
+      Instagram
+    </a>
+    <span class="dot">·</span>
+    <button type="button" class="admin-link" id="adminTrigger">🔐 Admin Panel</button>
+  </div>
+
+</div>
+
+<!-- Password gate -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-gate">
+    <h3>Admin Access</h3>
+    <p>Enter the admin password to view giveaway entries.</p>
+    <input type="password" id="adminPassword" placeholder="Password" autocomplete="off" />
+    <div class="gate-err" id="adminGateErr">Incorrect password.</div>
+    <div class="admin-gate-actions">
+      <button type="button" class="gate-cancel" id="adminCancel">Cancel</button>
+      <button type="button" class="gate-submit" id="adminSubmit">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin panel -->
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-panel-inner">
+    <div class="admin-panel-header">
+      <div>
+        <h2>Giveaway Entries</h2>
+        <div class="count" id="entryCount">0 entries</div>
+      </div>
+      <button class="admin-close" id="adminCloseBtn">Close</button>
+    </div>
+
+    <div class="admin-actions">
+      <button class="pick-winner-btn" id="pickWinnerBtn">🎲 Pick Random Winner</button>
+    </div>
+
+    <div class="winner-card" id="winnerCard">
+      <div class="winner-label">Winner</div>
+      <div class="winner-name" id="winnerName"></div>
+      <div class="winner-meta" id="winnerMeta"></div>
+    </div>
+
+    <div id="entriesContainer">
+      <div class="empty-state">No entries yet. Submissions will appear here.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('entryForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const statusBox = document.getElementById('statusBox');
+  const formView = document.getElementById('formView');
+  const successView = document.getElementById('successView');
+  const successName = document.getElementById('successName');
+
+  // In-memory store for this session (no localStorage per artifact constraints).
+  // If persistent_storage is wired up later, window.storage.set(...) can replace this.
+  const entries = [];
+
+  function setFieldError(fieldId, hasError){
+    const el = document.getElementById(fieldId);
+    el.classList.toggle('has-error', hasError);
+  }
+
+  function showStatus(message, type){
+    statusBox.textContent = message;
+    statusBox.className = 'status show ' + type;
+  }
+
+  function validDiscord(value){
+    // Accept new-style usernames (lowercase, 2-32 chars, letters/numbers/._)
+    // or legacy username#1234 format.
+    const newStyle = /^[a-z0-9._]{2,32}$/i;
+    const legacy = /^.{2,32}#[0-9]{4}$/;
+    return newStyle.test(value) || legacy.test(value);
+  }
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const discord = document.getElementById('discord').value.trim();
+
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const discordValid = validDiscord(discord);
+
+    setFieldError('field-name', name.length === 0);
+    setFieldError('field-email', !emailValid);
+    setFieldError('field-discord', !discordValid);
+
+    if (name.length === 0 || !emailValid || !discordValid){
+      showStatus('Please fix the highlighted fields and try again.', 'error');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    // Simulate a brief submit delay so the state change feels real.
+    setTimeout(function(){
+      entries.push({ name, email, discord, ts: Date.now() });
+
+      successName.textContent = name;
+      formView.classList.add('hide');
+      successView.classList.add('show');
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enter Giveaway';
+    }, 500);
+  });
+
+  ['name','email','discord'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){
+      setFieldError('field-' + id, false);
+      statusBox.className = 'status';
+    });
+  });
+
+  // ---------- Admin panel ----------
+  const ADMIN_PASSWORD = 'ArcadiaGWS1766';
+
+  const adminTrigger = document.getElementById('adminTrigger');
+  const adminOverlay = document.getElementById('adminOverlay');
+  const adminPasswordInput = document.getElementById('adminPassword');
+  const adminGateErr = document.getElementById('adminGateErr');
+  const adminCancel = document.getElementById('adminCancel');
+  const adminSubmit = document.getElementById('adminSubmit');
+  const adminPanel = document.getElementById('adminPanel');
+  const adminCloseBtn = document.getElementById('adminCloseBtn');
+  const entriesContainer = document.getElementById('entriesContainer');
+  const entryCount = document.getElementById('entryCount');
+  const pickWinnerBtn = document.getElementById('pickWinnerBtn');
+  const winnerCard = document.getElementById('winnerCard');
+  const winnerName = document.getElementById('winnerName');
+  const winnerMeta = document.getElementById('winnerMeta');
+
+  function openGate(){
+    adminOverlay.classList.add('show');
+    adminPasswordInput.value = '';
+    adminGateErr.classList.remove('show');
+    setTimeout(function(){ adminPasswordInput.focus(); }, 50);
+  }
+
+  function closeGate(){
+    adminOverlay.classList.remove('show');
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderEntries(){
+    entryCount.textContent = entries.length + (entries.length === 1 ? ' entry' : ' entries');
+    pickWinnerBtn.disabled = entries.length === 0;
+
+    if (entries.length === 0){
+      entriesContainer.innerHTML = '<div class="empty-state">No entries yet. Submissions will appear here.</div>';
+      return;
+    }
+
+    let rows = entries.map(function(e){
+      const d = new Date(e.ts);
+      const timeStr = d.toLocaleString();
+      return '<tr>' +
+        '<td>' + escapeHtml(e.name) + '</td>' +
+        '<td>' + escapeHtml(e.email) + '</td>' +
+        '<td>' + escapeHtml(e.discord) + '</td>' +
+        '<td>' + escapeHtml(timeStr) + '</td>' +
+        '</tr>';
+    }).join('');
+
+    entriesContainer.innerHTML =
+      '<table class="entries-table">' +
+        '<thead><tr><th>Name</th><th>Email</th><th>Discord</th><th>Submitted</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+  }
+
+  function openPanel(){
+    renderEntries();
+    adminPanel.classList.add('show');
+    closeGate();
+  }
+
+  function closePanel(){
+    adminPanel.classList.remove('show');
+  }
+
+  pickWinnerBtn.addEventListener('click', function(){
+    if (entries.length === 0) return;
+
+    const winner = entries[Math.floor(Math.random() * entries.length)];
+
+    winnerName.textContent = winner.name;
+    winnerMeta.textContent = winner.email + ' · ' + winner.discord;
+    winnerCard.classList.remove('show');
+    // restart animation
+    void winnerCard.offsetWidth;
+    winnerCard.classList.add('show');
+  });
+
+  adminTrigger.addEventListener('click', openGate);
+
+  adminCancel.addEventListener('click', closeGate);
+
+  adminOverlay.addEventListener('click', function(e){
+    if (e.target === adminOverlay) closeGate();
+  });
+
+  adminSubmit.addEventListener('click', function(){
+    if (adminPasswordInput.value === ADMIN_PASSWORD){
+      openPanel();
+    } else {
+      adminGateErr.classList.add('show');
+    }
+  });
+
+  adminPasswordInput.addEventListener('keydown', function(e){
+    if (e.key === 'Enter') adminSubmit.click();
+    if (e.key === 'Escape') closeGate();
+  });
+
+  adminPasswordInput.addEventListener('input', function(){
+    adminGateErr.classList.remove('show');
+  });
+
+  adminCloseBtn.addEventListener('click', closePanel);
+
+  // Optional discreet access via URL hash: #admin
+  if (window.location.hash === '#admin'){
+    openGate();
+  }
+</script>
+
+</body>
+</html>
