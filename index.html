@@ -486,6 +486,35 @@
     background:rgba(124,58,237,0.06);
   }
 
+  .entries-table td.remove-cell{
+    text-align:right;
+    width:1%;
+    white-space:nowrap;
+  }
+
+  .remove-entry-btn{
+    border:1px solid rgba(248,113,113,0.30);
+    background:rgba(248,113,113,0.08);
+    color:#f87171;
+    font-size:12px;
+    font-weight:700;
+    padding:7px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:color .15s ease, border-color .15s ease, background .15s ease;
+  }
+
+  .remove-entry-btn:hover{
+    color:#fca5a5;
+    border-color:rgba(248,113,113,0.65);
+    background:rgba(248,113,113,0.15);
+  }
+
+  .remove-entry-btn:disabled{
+    opacity:0.5;
+    cursor:not-allowed;
+  }
+
   .admin-actions{
     margin-bottom:20px;
     display:flex;
@@ -975,7 +1004,7 @@
 
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const ENTRIES_CLOSE_AT = '2026-06-17T17:59:59';
+  const ENTRIES_CLOSE_AT = '2026-06-17T23:59:59';
 
   const closedView = document.getElementById('closedView');
   const giveawayClosed = new Date() > new Date(ENTRIES_CLOSE_AT);
@@ -1242,14 +1271,21 @@
         '<td>' + escapeHtml(e.email) + '</td>' +
         '<td>' + escapeHtml(e.discord) + '</td>' +
         '<td>' + escapeHtml(timeStr) + '</td>' +
+        '<td class="remove-cell"><button type="button" class="remove-entry-btn" data-id="' + escapeHtml(e.id) + '" data-name="' + escapeHtml(e.name) + '">Remove</button></td>' +
         '</tr>';
     }).join('');
 
     entriesContainer.innerHTML =
       '<table class="entries-table">' +
-        '<thead><tr><th>Name</th><th>Email</th><th>Discord</th><th>Submitted</th></tr></thead>' +
+        '<thead><tr><th>Name</th><th>Email</th><th>Discord</th><th>Submitted</th><th></th></tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>';
+
+    entriesContainer.querySelectorAll('.remove-entry-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        removeEntry(btn.dataset.id, btn.dataset.name, btn);
+      });
+    });
   }
 
   async function fetchEntries(){
@@ -1283,40 +1319,95 @@
     adminPanel.classList.remove('show');
   }
 
+  // ---------- Confirm dialog (shared by Clear All and per-entry Remove) ----------
+  const confirmDialogTitle = document.querySelector('.confirm-dialog h3');
+  const confirmDialogText = document.querySelector('.confirm-dialog p');
+
+  let pendingAction = null; // 'clearAll' or { type: 'removeOne', id, name, btn }
+
+  function openConfirm(action){
+    pendingAction = action;
+
+    if (action === 'clearAll'){
+      confirmDialogTitle.textContent = 'Clear All Entries?';
+      confirmDialogText.textContent = 'This will permanently delete every entry from the database. This action cannot be undone.';
+      confirmDeleteBtn.textContent = 'Delete All';
+    } else {
+      confirmDialogTitle.textContent = 'Remove This Entry?';
+      confirmDialogText.textContent = 'This will permanently remove ' + action.name + '\u2019s entry from the giveaway. They will be able to enter again with the same email if you don\u2019t want that.';
+      confirmDeleteBtn.textContent = 'Remove';
+    }
+
+    confirmOverlay.classList.add('show');
+  }
+
+  function removeEntry(id, name, btn){
+    openConfirm({ type: 'removeOne', id: id, name: name, btn: btn });
+  }
+
   // ---------- Clear All ----------
   clearAllBtn.addEventListener('click', function(){
-    confirmOverlay.classList.add('show');
+    openConfirm('clearAll');
   });
 
   confirmCancelBtn.addEventListener('click', function(){
     confirmOverlay.classList.remove('show');
+    pendingAction = null;
   });
 
   confirmOverlay.addEventListener('click', function(e){
-    if (e.target === confirmOverlay) confirmOverlay.classList.remove('show');
+    if (e.target === confirmOverlay){
+      confirmOverlay.classList.remove('show');
+      pendingAction = null;
+    }
   });
 
   confirmDeleteBtn.addEventListener('click', async function(){
+    if (!pendingAction) return;
+
     confirmDeleteBtn.disabled = true;
-    confirmDeleteBtn.textContent = 'Deleting…';
+    confirmDeleteBtn.textContent = pendingAction === 'clearAll' ? 'Deleting…' : 'Removing…';
 
-    const { error } = await supabaseClient
-      .from('entries')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
+    if (pendingAction === 'clearAll'){
+      const { error } = await supabaseClient
+        .from('entries')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
-    confirmDeleteBtn.disabled = false;
-    confirmDeleteBtn.textContent = 'Delete All';
-    confirmOverlay.classList.remove('show');
+      confirmDeleteBtn.disabled = false;
+      confirmOverlay.classList.remove('show');
 
-    if (error){
-      alert('Failed to clear entries: ' + error.message);
-      return;
+      if (error){
+        alert('Failed to clear entries: ' + error.message);
+        pendingAction = null;
+        return;
+      }
+
+      entries = [];
+      winnerCard.classList.remove('show');
+      renderEntries();
+    } else {
+      const { id, btn } = pendingAction;
+
+      const { error } = await supabaseClient
+        .from('entries')
+        .delete()
+        .eq('id', id);
+
+      confirmDeleteBtn.disabled = false;
+      confirmOverlay.classList.remove('show');
+
+      if (error){
+        alert('Failed to remove entry: ' + error.message);
+        pendingAction = null;
+        return;
+      }
+
+      entries = entries.filter(function(e){ return e.id !== id; });
+      renderEntries();
     }
 
-    entries = [];
-    winnerCard.classList.remove('show');
-    renderEntries();
+    pendingAction = null;
   });
 
   // ---------- Pick winner ----------
