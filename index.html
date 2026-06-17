@@ -119,13 +119,10 @@
     margin:0 0 26px;
   }
 
-  .countdown-card{
-    background:linear-gradient(160deg, rgba(124,58,237,0.16), rgba(10,7,18,0.4));
-    border:1px solid var(--card-border);
-    border-radius:14px;
-    padding:16px 14px;
-    margin-bottom:24px;
+  /* ---- Countdown: plain inline text (no box/card) ---- */
+  .countdown-inline{
     text-align:center;
+    margin-bottom:26px;
   }
 
   .countdown-label{
@@ -134,39 +131,25 @@
     letter-spacing:0.08em;
     color:var(--purple-bright);
     font-weight:700;
-    margin-bottom:12px;
+    margin-bottom:8px;
   }
 
-  .countdown-units{
-    display:flex;
-    justify-content:center;
-    gap:10px;
-  }
-
-  .countdown-unit{
-    min-width:52px;
-  }
-
-  .countdown-value{
-    font-size:22px;
+  .countdown-clock{
+    font-size:28px;
     font-weight:800;
     color:var(--text-hi);
-    background:var(--field-bg);
-    border:1px solid var(--field-border);
-    border-radius:10px;
-    padding:8px 0;
     font-variant-numeric:tabular-nums;
+    letter-spacing:0.01em;
   }
 
-  .countdown-name{
-    font-size:11px;
+  .countdown-clock .cd-unit-name{
+    font-size:13px;
+    font-weight:600;
     color:var(--text-dim);
-    margin-top:5px;
-    text-transform:uppercase;
-    letter-spacing:0.05em;
+    margin:0 2px 0 4px;
   }
 
-  .countdown-card.ended .countdown-label{
+  .countdown-inline.ended .countdown-label{
     color:var(--text-mid);
   }
 
@@ -816,25 +799,13 @@
       <h2>Giveaway Entry</h2>
       <p class="sub">Enter your details below for a chance to win.</p>
 
-      <div class="countdown-card" id="countdownCard">
-        <div class="countdown-label">Giveaway Ends In</div>
-        <div class="countdown-units">
-          <div class="countdown-unit">
-            <div class="countdown-value" id="cdDays">00</div>
-            <div class="countdown-name">Days</div>
-          </div>
-          <div class="countdown-unit">
-            <div class="countdown-value" id="cdHours">00</div>
-            <div class="countdown-name">Hrs</div>
-          </div>
-          <div class="countdown-unit">
-            <div class="countdown-value" id="cdMinutes">00</div>
-            <div class="countdown-name">Min</div>
-          </div>
-          <div class="countdown-unit">
-            <div class="countdown-value" id="cdSeconds">00</div>
-            <div class="countdown-name">Sec</div>
-          </div>
+      <div class="countdown-inline" id="countdownInline">
+        <div class="countdown-label" id="countdownLabel">Giveaway Ends In</div>
+        <div class="countdown-clock">
+          <span id="cdDays">0</span><span class="cd-unit-name">d</span>
+          <span id="cdHours">00</span><span class="cd-unit-name">h</span>
+          <span id="cdMinutes">00</span><span class="cd-unit-name">m</span>
+          <span id="cdSeconds">00</span><span class="cd-unit-name">s</span>
         </div>
       </div>
 
@@ -848,7 +819,8 @@
         <div class="field" id="field-email">
           <label for="email">Email</label>
           <input type="email" id="email" name="email" placeholder="nolan@example.com" autocomplete="email" required />
-          <div class="err">Please enter a valid email address.</div>
+          <div class="hint" id="emailHint">Used to check for duplicate entries.</div>
+          <div class="err" id="emailErr">Please enter a valid email address.</div>
         </div>
 
         <div class="field" id="field-discord">
@@ -1003,7 +975,8 @@
     closedView.classList.add('show');
   }
 
-  const countdownCard = document.getElementById('countdownCard');
+  const countdownInline = document.getElementById('countdownInline');
+  const countdownLabel = document.getElementById('countdownLabel');
   const cdDays = document.getElementById('cdDays');
   const cdHours = document.getElementById('cdHours');
   const cdMinutes = document.getElementById('cdMinutes');
@@ -1017,12 +990,12 @@
     const diff = new Date(ENTRIES_CLOSE_AT) - new Date();
 
     if (diff <= 0){
-      cdDays.textContent = '00';
+      cdDays.textContent = '0';
       cdHours.textContent = '00';
       cdMinutes.textContent = '00';
       cdSeconds.textContent = '00';
-      countdownCard.classList.add('ended');
-      document.querySelector('.countdown-label').textContent = 'Giveaway Ended';
+      countdownInline.classList.add('ended');
+      countdownLabel.textContent = 'Giveaway Ended';
       if (countdownInterval) clearInterval(countdownInterval);
       return;
     }
@@ -1033,7 +1006,7 @@
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
-    cdDays.textContent = pad(days);
+    cdDays.textContent = days;
     cdHours.textContent = pad(hours);
     cdMinutes.textContent = pad(minutes);
     cdSeconds.textContent = pad(seconds);
@@ -1059,6 +1032,39 @@
     const legacy = /^.{2,32}#[0-9]{4}$/;
     return newStyle.test(value) || legacy.test(value);
   }
+
+  const emailInput = document.getElementById('email');
+  const emailErrEl = document.getElementById('emailErr');
+  const emailHintEl = document.getElementById('emailHint');
+  let duplicateCheckTimer = null;
+
+  // Live duplicate-email check as the user types (debounced), in addition to the
+  // server-side check performed at submit time below.
+  emailInput.addEventListener('input', function(){
+    setFieldError('field-email', false);
+    emailErrEl.textContent = 'Please enter a valid email address.';
+    emailHintEl.textContent = 'Used to check for duplicate entries.';
+    statusBox.className = 'status';
+
+    if (duplicateCheckTimer) clearTimeout(duplicateCheckTimer);
+
+    const value = emailInput.value.trim();
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (!emailValid) return;
+
+    duplicateCheckTimer = setTimeout(async function(){
+      const { data, error } = await supabaseClient
+        .from('entries')
+        .select('id')
+        .ilike('email', value)
+        .limit(1);
+
+      if (!error && data && data.length > 0){
+        setFieldError('field-email', true);
+        emailErrEl.textContent = 'That email has already entered. One entry per person.';
+      }
+    }, 500);
+  });
 
   form.addEventListener('submit', async function(e){
     e.preventDefault();
@@ -1092,6 +1098,33 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting…';
 
+    // Pre-check for an existing entry with this email (case-insensitive),
+    // as a clear, friendly first line of defense.
+    const { data: existing, error: lookupError } = await supabaseClient
+      .from('entries')
+      .select('id')
+      .ilike('email', email)
+      .limit(1);
+
+    if (lookupError){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enter Giveaway';
+      showStatus('Something went wrong checking your entry. Please try again.', 'error');
+      return;
+    }
+
+    if (existing && existing.length > 0){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Enter Giveaway';
+      setFieldError('field-email', true);
+      emailErrEl.textContent = 'That email has already entered. One entry per person.';
+      showStatus('That email has already entered. One entry per person.', 'error');
+      return;
+    }
+
+    // Final insert. If a unique constraint exists on entries.email (recommended,
+    // see note below), this also blocks duplicates submitted in a race condition
+    // between the pre-check above and this insert.
     const { error } = await supabaseClient
       .from('entries')
       .insert([{ name, email, discord }]);
@@ -1102,6 +1135,7 @@
     if (error){
       if (error.code === '23505'){
         setFieldError('field-email', true);
+        emailErrEl.textContent = 'That email has already entered. One entry per person.';
         showStatus('That email has already entered. One entry per person.', 'error');
       } else {
         showStatus('Something went wrong submitting your entry. Please try again.', 'error');
@@ -1114,7 +1148,7 @@
     successView.classList.add('show');
   });
 
-  ['name','email','discord'].forEach(function(id){
+  ['name','discord'].forEach(function(id){
     document.getElementById(id).addEventListener('input', function(){
       setFieldError('field-' + id, false);
       statusBox.className = 'status';
