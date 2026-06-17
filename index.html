@@ -1241,7 +1241,7 @@
     const { error } = await supabaseClient
       .from('entries')
       .delete()
-      .gte('id', 0);
+      .neq('id', '00000000-0000-0000-0000-000000000000');
 
     confirmDeleteBtn.disabled = false;
     confirmDeleteBtn.textContent = 'Delete All';
